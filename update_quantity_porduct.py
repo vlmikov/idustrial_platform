@@ -37,6 +37,8 @@ for key in result:
     elif key == "end_date":
         end_date = result[key]
         product.end_date = end_date
+
+
     elif key == "product_id":
         product_id = result[key]
         product.product_id = product_id
@@ -58,12 +60,16 @@ for key in result:
     elif key == "status":
         status = result[key]
         product.status = status
+
     elif key == "opakovka":
         opakovka = result[key]
         product.opakovka = opakovka
+
     elif key == "kashon":
         kashon = result[key]
         product.kashon = kashon
+
+
     elif key == "surovina":
         surovina = result[key]
         product.surovina = surovina
@@ -75,4 +81,22 @@ for key in result:
         product.pf_2 = pf_2
 
 
+
+
+print(product.pf_2[0]['quantity'])
+kg_product = 10
+
+print(product.pf_2)
+
+for x in product.pf_2:
+    for pf_2_key in x:
+        if pf_2_key == "quantity":
+            x[pf_2_key] = 10
+        if pf_2_key == "recept":
+            for recept in x['recept']:
+                for recept_key in recept:
+                    if recept_key == "quantity":
+                        recept[recept_key] *= float(x['quantity'])
+
+print(product.pf_2)
 

@@ -71,6 +71,17 @@ class Product(Oreder):
                 print("намерена опаковка. Присвоен")
             elif "ПФ" in current_name_product:
                 pf_recept_from_db = get_pf_recept(current_id)
+
+
+                for pf_2_key in pf_recept_from_db:
+                    if pf_2_key == "quantity":
+                        pf_recept_from_db[pf_2_key] = current_quantity
+                    if pf_2_key == "recept":
+                        for recept in pf_recept_from_db['recept']:
+                            for recept_key in recept:
+                                if recept_key == "quantity":
+                                    recept[recept_key] *= float(pf_recept_from_db['quantity'])
+
                 self.pf_2.append(pf_recept_from_db)
                 print("намерен полуфабрикат. Присвоен")
             else:
@@ -80,8 +91,24 @@ class Product(Oreder):
                 self.surovina.append(surovina.__dict__)
                 print("Намерена суровина. Да се присъедини към суровини")
 
-    def quantity_update(self, new_quantity):
-        pass
+    def quantity_update(self, boxes):
+        self.box_num = boxes
+        self.quantity_product = self.box_num * self.weight_one * self.number_in_box
+
+        for opakovka_key in self.opakovka:
+            if opakovka_key == "opakovka_quantity":
+                self.opakovka[opakovka_key] *= self.box_num
+
+        for kashon_key in self.kashon:
+            if kashon_key == "kashon_quantity":
+                self.kashon[kashon_key] *= boxes
+
+        for surv in self.surovina:
+            for surovina_key in surv:
+                if surovina_key == "surovina_quantity":
+                    surv[surovina_key] *= boxes
+
+
 
 
 
@@ -163,21 +190,21 @@ test_product.fill_info_file()
 
 
 
-# def insert_doc(doc):
-#
-#     try:
-#         collection.insert_one(doc)
-#
-#     except pymongo.errors.DuplicateKeyError as e:
-#         insert_doc(doc)
-#
-#
-# c = collection.count_documents({"firm_id": test_product.product_id})
-# if c > 0:
-#     print("Съществува Полуфабрикат с такъв номер")
-# else:
-#     insert_doc(test_product.__dict__)
-#     print("Успешно въведохте в базата данни полуфабриката")
+def insert_doc(doc):
+
+    try:
+        collection.insert_one(doc)
+
+    except pymongo.errors.DuplicateKeyError as e:
+        insert_doc(doc)
+
+
+c = collection.count_documents({"firm_id": test_product.product_id})
+if c > 0:
+    print("Съществува Полуфабрикат с такъв номер")
+else:
+    insert_doc(test_product.__dict__)
+    print("Успешно въведохте в базата данни полуфабриката")
 
 
 

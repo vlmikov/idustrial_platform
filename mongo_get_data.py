@@ -16,4 +16,3 @@ def get_pf_recept(current_id):
     result = collection.find_one({"firm_id" : current_id})
     return  result
 
-print("Vlado")
