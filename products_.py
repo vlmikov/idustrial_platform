@@ -4,9 +4,9 @@ from datetime import date
 import pandas as pd
 import pymongo
 
-from mongo_get_data import len_pf, get_pf_recept
-from order_input import Oreder
-
+# from mongo_get_data import len_pf, get_pf_recept
+# from order_input import Oreder
+from idustrial_platform.mongo_get_data import get_pf_recept
 
 
 class Oreder:
@@ -20,6 +20,7 @@ class Oreder:
 
 
 class Product(Oreder):
+
     def __init__(self, _id : int, contragent=None, order_date=None):
         self.contragent = None
         self._id = _id
@@ -40,6 +41,32 @@ class Product(Oreder):
         self.surovina = []
         self.pf_1 = [] # Списък на вложените ПФ
         self.pf_2 = []  #Списък на всички полуфабрикати
+
+    def get_recept_pf_db(self, recept_database_pf, quantity):
+        for pf_2_key in recept_database_pf:
+            if pf_2_key == "quantity":
+                recept_database_pf[pf_2_key] = quantity
+                print(f"quantity = {quantity}")
+            if pf_2_key == "recept":
+                for recept in recept_database_pf['recept']:
+                    if "ПФ" in recept['name']:
+                        recept['quantity'] *= quantity
+                        id_rec = recept['firm_id']
+                        db_rec = get_pf_recept(id_rec)
+                        res = self.get_recept_pf_db(db_rec, quantity)
+                        for recept_key in res:
+                            if recept_key == "recept":
+                                for pr in res[recept_key]:
+                                    if recept_key == "quantity":
+                                        pr[recept_key] *= recept['quantity']
+                        self.pf_1.append(res)
+                        continue
+                    else:
+                        for recept_key in recept:
+                            if recept_key == "quantity":
+
+                                recept[recept_key] *= float(recept_database_pf['quantity'])
+        return recept_database_pf
 
 
     def fill_info_file(self):
@@ -71,18 +98,9 @@ class Product(Oreder):
                 print("намерена опаковка. Присвоен")
             elif "ПФ" in current_name_product:
                 pf_recept_from_db = get_pf_recept(current_id)
+                result = self.get_recept_pf_db(pf_recept_from_db, current_quantity)
+                self.pf_2.append(result)
 
-
-                for pf_2_key in pf_recept_from_db:
-                    if pf_2_key == "quantity":
-                        pf_recept_from_db[pf_2_key] = current_quantity
-                    if pf_2_key == "recept":
-                        for recept in pf_recept_from_db['recept']:
-                            for recept_key in recept:
-                                if recept_key == "quantity":
-                                    recept[recept_key] *= float(pf_recept_from_db['quantity'])
-
-                self.pf_2.append(pf_recept_from_db)
                 print("намерен полуфабрикат. Присвоен")
             else:
                 surovina = Surovina(self.contragent, self.order_id, self.product_id, self.product_id,
@@ -107,6 +125,30 @@ class Product(Oreder):
             for surovina_key in surv:
                 if surovina_key == "surovina_quantity":
                     surv[surovina_key] *= boxes
+
+        for x in self.pf_2:
+            for pf_2_key in x:
+                if pf_2_key == "quantity":
+                    x[pf_2_key] = x[pf_2_key] *boxes
+                if pf_2_key == "recept":
+                    for recept in x['recept']:
+                        for recept_key in recept:
+                            if recept_key == "quantity":
+                                recept[recept_key] *= float(x['quantity'])
+
+
+        for x in self.pf_1:
+            for pf_1_key in x:
+                if pf_1_key == "quantity":
+                    x[pf_1_key] = 10
+                if pf_1_key == "recept":
+                    for recept in x['recept']:
+                        for recept_key in recept:
+                            if recept_key == "quantity":
+                                recept[recept_key] *= float(x['quantity'])
+
+
+
 
 
 
@@ -178,7 +220,7 @@ def len_prod():
     return len(list(collection.find()))
 
 
-_id_product = len_prod() + 1
+_id_product = len_prod() + 1 + 1
 
 # print(get_pf_recept(7))
 
@@ -191,15 +233,13 @@ test_product.fill_info_file()
 
 
 def insert_doc(doc):
-
     try:
         collection.insert_one(doc)
-
     except pymongo.errors.DuplicateKeyError as e:
         insert_doc(doc)
 
 
-c = collection.count_documents({"firm_id": test_product.product_id})
+c = collection.count_documents({"firm_id": test_product._id})
 if c > 0:
     print("Съществува Полуфабрикат с такъв номер")
 else:

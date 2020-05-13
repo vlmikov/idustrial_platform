@@ -1,5 +1,7 @@
-from products_ import Oreder, Product, Opakovka, Kashon
+
 from pymongo import MongoClient
+
+from idustrial_platform.products_ import Product
 
 cluster = MongoClient("mongodb+srv://admin:admin@cluster0-r3p5k.mongodb.net/test?retryWrites=true&w=majority")
 
@@ -17,7 +19,7 @@ def len_prod():
 _id_product = len_prod() + 1
 
 
-result = collection.find_one({"_id": 9})
+result = collection.find_one({"_id": 38})
 
 data_id = 1
 product = Product(data_id)
@@ -86,17 +88,8 @@ for key in result:
 print(product.pf_2[0]['quantity'])
 kg_product = 10
 
-print(product.pf_2)
+print(product.pf_1)
 
-for x in product.pf_2:
-    for pf_2_key in x:
-        if pf_2_key == "quantity":
-            x[pf_2_key] = 10
-        if pf_2_key == "recept":
-            for recept in x['recept']:
-                for recept_key in recept:
-                    if recept_key == "quantity":
-                        recept[recept_key] *= float(x['quantity'])
-
-print(product.pf_2)
+product.quantity_update(10)
+print(product.pf_1)
 
